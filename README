@@ -1,0 +1,13 @@
+
+DEPENDENCIES:
+eyeD3
+apt-get install eyeD3
+
+
+install:
+place the mtag folder where ever you want and create a symlink from mtag.py to somewhere in your path (ex: /usr/bin/mtag) 
+
+mtag -h for usage
+
+
+This is basically a custom wrapper for eyeD3 All major tag related (set/get tag info, convert to v2.3) functionality is due to eyeD3 and I take no credit for it.
