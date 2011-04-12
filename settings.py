@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 musicbase = "/var/music/subsonic"
-
+format = "%n %a - %A: %t"
 
 #        if mtag == "comment":
 #            tag.addComment(val)

@@ -1,9 +1,11 @@
+import sys
 #!/usr/bin/env python
 import argparse
 import shutil
 import path
 
 import settings
+from fileparse import *
 from mp3batch import *
 from mp3check import *
 
@@ -38,13 +40,14 @@ util.add_argument('-c','--convert', action="store_true", default=False,
 						help='convert Existing Tags to ID3v2.3 ')
 util.add_argument('-L', action="store", dest="genre_list", choices=["n","i"],
 						help="list of ID3 Recognized Genres: \n   n:  by Genre Name \n   i:  by Genre ID")
+util.add_argument('-F', '--format', action="store", dest='parse',
+						help='parse file names for Tags \n%%n - Track Number\n%%a - Artist\n%%A - Album\n%%t - Track Title\n%%i - Ignore (not parsed to a tag)')
 
 argparser.add_argument('Directory', action="store", nargs = '?', default = os.getcwd(),
                         help="directory to work with (default: current dir [pwd])")
 
 results = argparser.parse_args()
 args = sys.argv
-
 
 if len(args) == 1:
     argparser.print_help()
@@ -117,6 +120,10 @@ elif results.genre_list == 'i':
 if results.rename == True:
     if setFileName(mufiles) == 0:
         print "\tNo files needed to be renamed!"
+    sys.exit()
+
+if results.parse:
+    parseFile(results.parse, mufiles)
 
 if results.dest:
     for f in mufiles:
