@@ -220,6 +220,7 @@ def getDbls(files):
     return summary
 
 def listTags(files):
+    files.sort()
     for f in files:
         tag = eyeD3.Tag()
         tag.link(f)

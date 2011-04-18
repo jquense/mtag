@@ -1,8 +1,8 @@
 import os.path
 import os
-import sys
 import glob
 import eyeD3
+import shutil
 from path import path
 from output import *
 import settings
@@ -118,43 +118,93 @@ def results(f, changed):
     print ('...'+ f[-55:]).rjust(60),  ('   -->   ' + red(str[1:]))
 
     return 1
-
-def setDirs(dest, mp3):
-    #print "got here"
+def getDest(dest, file):
     tag = eyeD3.Tag()
-    tag.link(mp3)
+    tag.link(file)
 
     artist = str(tag.getArtist())
     album = str(tag.getAlbum())
 
-    dir = os.path.join(musicbase, os.path.join(dest, artist))
+    dest = os.path.join(musicbase, os.path.join(dest, artist))
+    dest = os.path.join(musicbase, os.path.join(dest, album))
 
-    try:
-        os.mkdir(dir)
-    except OSError:
-        pass
-    else:
-	print yellow("--------------------------------------------------------------")
-        print warn("Creating Dir: " + dir)
-	print yellow("--------------------------------------------------------------")
+    return dest
 
-    os.chmod(dir, 0775)
-    os.chown(dir, 115, 1001)
+def setDirs(dest, files):
+    #print "got here"
+    tag = eyeD3.Tag()
+    dests = []
+    for f in files:
+        tag.link(f)
+        artist = str(tag.getArtist())
+        album = str(tag.getAlbum())
 
-    dir = os.path.join(dir, album)
+        dir = os.path.join(musicbase, os.path.join(dest, artist))
 
-    try:
-        os.mkdir(dir)
-    except OSError:
-        pass
+        try:
+            os.mkdir(dir)
+        except OSError:
+            pass
+        else:
+            print yellow("--------------------------------------------------------------")
+            print warn("Creating Dir: " + dir)
+            print yellow("--------------------------------------------------------------")
 
-    print ""
-    print warn("Move to: " + dir)
-    print yellow("-" * 85)
+        os.chmod(dir, 0775)
+        os.chown(dir, 115, 1001)
 
-    os.chmod(dir, 0775)
-    os.chown(dir, 115, 1001)
-    return str(dir)
+        dir = os.path.join(dir, album)
+
+        try:
+            os.mkdir(dir)
+        except OSError:
+            pass
+
+        os.chmod(dir, 0775)
+        os.chown(dir, 115, 1001)
+        if dir not in dests:
+            dests.append(dir)
+
+    return dests
+
+def moveFiles(dest, files):
+    folders = setDirs(dest, files)
+    folders.sort(key = len)
+
+    for folder in folders:
+        print ""
+        print bold(yellow(folder))
+        print "-----------------------------"
+        for f in files:
+            if not os.path.exists(f):
+                pass
+            elif getDest(dest, f) == folder:
+                try:
+                    os.chmod(f, 0775)
+                    os.chown(f, 115, 1001)
+                except OSError as (errno, strerror):
+                    print warn(strerror + ": Are you root?")
+                    sys.exit()
+                else:
+                    try:
+                        shutil.move(f, str(folder))
+                    except (IOError, OSError) as (errno, strerror):
+                        print warn("Error({0}): {1}".format(errno, strerror))
+                    else:
+                        print ' -->  ' +os.path.basename(f)
+
+                    pics = glob.glob1(folder, "*.jpg")
+                    if pics:
+                        i = 0
+                        for p in pics:
+                            picdest = os.path.join(str(folder), "cover-" + str(i)+".jpg")
+                            i=+1
+                            os.chmod(p, 0775)
+                            os.chown(p, 115, 1001)
+                            try:
+                                shutil.move(p, picdest)
+                            except:
+                                pass
 
 def convertID3(files):
 

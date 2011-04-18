@@ -1,15 +1,13 @@
-import sys
 #!/usr/bin/env python
 import argparse
 import shutil
 import path
 
-import settings
 from fileparse import *
 from mp3batch import *
 from mp3check import *
 
-argparser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+argparser = argparse.ArgumentParser(description="hi", formatter_class=argparse.RawTextHelpFormatter)
 listing = argparser.add_argument_group("Tag Analysis")
 tagging = argparser.add_argument_group('Batch Tagging')
 util = argparser.add_argument_group('Utilities')
@@ -73,6 +71,7 @@ if not mufiles and not results.genre_list:
     print warn("No .mp3 Files in Dir(s): .mp3 and .MP3 are different")
     sys.exit()
 else:
+    mufiles.sort()
     print ""
     print bold(purple("MP3 Batch:"))
     print bold(purple("------------------"))
@@ -126,32 +125,5 @@ if results.parse:
     parseFile(results.parse, mufiles)
 
 if results.dest:
-    for f in mufiles:
-        try:
-            dest = setDirs(results.dest, f)
-            os.chmod(f, 0775)
-            os.chown(f, 115, 1001)
-        except OSError as (errno, strerror):
-            print warn(strerror + ": Are you root?")
-            sys.exit()
-        else:
-            try:
-                shutil.move(f, str(dest))
-            except (IOError, OSError) as (errno, strerror):
-                print warn("Error({0}): {1}".format(errno, strerror))
-            else:
-                print '  -->  ' +os.path.basename(f)
-
-            pics = glob.glob1(os.path.dirname(f), "*.jpg")
-            if pics:
-                i = 0
-                for p in pics:
-                    picdest = os.path.join(str(dest), "cover-" + str(i)+".jpg")
-                    i=+1
-                    os.chmod(p, 0775)
-                    os.chown(p, 115, 1001)
-                    try:
-                        shutil.move(p, picdest)
-                    except:
-                        pass
+    moveFiles(results.dest, mufiles)
 

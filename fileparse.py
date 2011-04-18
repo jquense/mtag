@@ -66,6 +66,7 @@ def parseFile(format, files):
     delims = p.split(format)
     codes = code.findall(format)
     files.sort()
+
     
     for c in codes:     #Check for valid Format
         getCodeStr(c)
@@ -91,12 +92,13 @@ def parseFile(format, files):
         print blue(bold(f + ext))
         print "  parsed: " + format + ' as...'
         for v in range(0, len(vals)):
+            vals[v] = vals[v].replace("_", " ")
             print ((' ' * 6) + bold(getCodeStr(codes[v]))).rjust(17) +" => ", vals[v]
 
         if noAsk == False:
             next = False
             while next == False:
-                reslt = raw_input("Accept these tags? (Default yes) [h for help]: ")
+                reslt = raw_input("Accept these tags [ynah]? (Default yes) [h for help]: ")
                 if reslt.lower() == "y" or reslt == '':
                     next = True
                     parseToTags(file, codes, vals)
