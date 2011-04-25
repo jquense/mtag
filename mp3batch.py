@@ -149,10 +149,13 @@ def setDirs(dest, files):
             print yellow("--------------------------------------------------------------")
             print warn("Creating Dir: " + dir)
             print yellow("--------------------------------------------------------------")
-
-        os.chmod(dir, 0775)
-        os.chown(dir, 115, 1001)
-
+				try:
+	        	os.chmod(dir, 0775)
+  	      	os.chown(dir, 115, 1001)
+				except OSError as (errno, strerror):
+          	print warn(strerror + ": Are you root?")
+         	  sys.exit()
+				
         dir = os.path.join(dir, album)
 
         try:
@@ -160,8 +163,13 @@ def setDirs(dest, files):
         except OSError:
             pass
 
-        os.chmod(dir, 0775)
-        os.chown(dir, 115, 1001)
+				try:
+        		os.chmod(dir, 0775)
+        		os.chown(dir, 115, 1001)
+        except OSError as (errno, strerror):
+        		print warn(strerror + ": Are you root?")
+        		sys.exit()
+
         if dir not in dests:
             dests.append(dir)
 
