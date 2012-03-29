@@ -42,7 +42,8 @@ def parseToTags(f, codes, vals):
     print warn('writing tags...')
     for c in range(0, len(codes)):
         if codes[c] =='%n':
-            tag.setTrackNum(vals[c])
+            trackTotal = tag.getTrackNum()[1]
+            tag.setTrackNum((vals[c], trackTotal))
         if codes[c] =='%a':
             tag.setArtist(vals[c])
         if codes[c] =='%A':

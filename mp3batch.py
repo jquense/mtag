@@ -34,7 +34,7 @@ def hasMp3(dir):
 
 
 def getRenameStr(mp3):
-
+    badChars = "/|<>*?\\"
     if os.path.splitext(mp3)[1] == ".mp3":
         tag = eyeD3.Tag()
         tag.link(mp3)
@@ -47,6 +47,10 @@ def getRenameStr(mp3):
         rename = rename + " " + tag.getArtist()
         rename = rename + " - " + tag.getAlbum()
         rename = rename + ": " + tag.getTitle()
+
+        for c in badChars:
+            rename = rename.replace(c,', ')
+
         return rename
 
 def setFileName(files):
@@ -54,7 +58,7 @@ def setFileName(files):
     print bold(purple('Renaming Files:'))
     print '------------------------------------'
     retval = 0
-
+    
     for f in files:
         folder = os.path.dirname(f)
         fname = getRenameStr(f)
@@ -66,12 +70,11 @@ def setFileName(files):
                 print os.path.basename(f) + '   -->    ' + fname + ext
                 retval += 1
         except:
-            print warn("Error Renaming: ", f)
-
+            print warn('Could Not Rename: ' + f)
     return retval
 
 
-def setTags(files, artist ='', album ='', genre ='', year = ''):
+def setTags(files, artist ='', album ='', genre ='', year = '', disc = []):
     retval = 0
     for f in files:
         tag = eyeD3.Tag()
@@ -89,21 +92,34 @@ def setTags(files, artist ='', album ='', genre ='', year = ''):
                 tag.update()
                 changed.append("Album")
         if genre:
-            if genre.isdigit():
-                if tag.getGenre().getId() != int(genre):
+            try:
+                g = tag.getGenre()
+            except eyeD3.GenreException:
+                pass
+            finally:
+                go = False
+                if not g:
+                    go = True
+                elif genre.isdigit():
+                    if tag.getGenre().getId() != int(genre):
+                        go = True
+                else:
+                    if tag.getGenre().getName().lower() != genre.lower():
+                        go = True
+                if go:
                     tag.setGenre(genre)
                     tag.update()
                     changed.append("Genre")
-            else:
-                if tag.getGenre().getName().lower() != genre.lower():
-                    tag.setGenre(genre)
-                    tag.update()
-                    changed.append("Genre")
+
         if year:
             if tag.getDate() != year:
                 tag.setDate(year)
                 tag.update()
                 changed.append("Year")
+        if disc:
+            tag.setDiscNum(disc)
+            tag.update()
+            changed.append("Disc Number")
         if changed:
             retval =+ 1
             results(f, changed)
@@ -149,12 +165,12 @@ def setDirs(dest, files):
             print yellow("--------------------------------------------------------------")
             print warn("Creating Dir: " + dir)
             print yellow("--------------------------------------------------------------")
-				try:
-	        	os.chmod(dir, 0775)
-  	      	os.chown(dir, 115, 1001)
-				except OSError as (errno, strerror):
-          	print warn(strerror + ": Are you root?")
-         	  sys.exit()
+	try:
+	    os.chmod(dir, 0775)
+  	    os.chown(dir, 115, 1001)
+	except OSError as (errno, strerror):
+            print warn(strerror + ": Are you root?")
+            sys.exit()
 				
         dir = os.path.join(dir, album)
 
@@ -163,12 +179,12 @@ def setDirs(dest, files):
         except OSError:
             pass
 
-				try:
-        		os.chmod(dir, 0775)
-        		os.chown(dir, 115, 1001)
+	try:
+            os.chmod(dir, 0775)
+            os.chown(dir, 115, 1001)
         except OSError as (errno, strerror):
-        		print warn(strerror + ": Are you root?")
-        		sys.exit()
+            print warn(strerror + ": Are you root?")
+            sys.exit()
 
         if dir not in dests:
             dests.append(dir)
@@ -181,7 +197,7 @@ def moveFiles(dest, files):
 
     for folder in folders:
         print ""
-        print bold(yellow(folder))
+        print bold(yellow(os.path.relpath(folder, start=os.path.join(musicbase, dest))))
         print "-----------------------------"
         for f in files:
             if not os.path.exists(f):

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import shutil
 import path
 
 from fileparse import *
@@ -27,6 +26,8 @@ tagging.add_argument('-g', '--genre', action="store", dest="genre",
 						help='define the genre (accepts Name, or ID)\n  see -L {n, i} for ID3 recognized Genre Name & ID')
 tagging.add_argument('-y', '--year', action="store", dest="year",
 						help='define the year')
+tagging.add_argument('-n', '--disc-num', action="store", dest="disc", type=str,
+						help='define the disc number [num/total]')
 
 util.add_argument('-d', action="store", dest="dest", choices=getValidDest(),
 						help=" \nmoves files to a base Subsonic music folder (valid choices above) \n--- musicbase dir can be set in 'settings.py'")
@@ -52,20 +53,23 @@ if len(args) == 1:
     sys.exit()
 ########################################################
 
-if os.path.isdir(results.Directory):
-    basedir = results.Directory
-else:
-    basedir = os.path.dirname(results.Directory)
+def getFileList():
+    files = []
+    if os.path.isdir(results.Directory):
+        basedir = results.Directory
+    else:
+        basedir = os.path.dirname(results.Directory)
 
-mufiles = []
+    if results.recur:
+        base = path(basedir)
+        for f in base.walkfiles('*.mp3'):
+            files.append(str(f))
+    else:
+        for f in glob.glob1(basedir, '*.mp3' ):
+            files.append(os.path.join(basedir, f))
+    return files
 
-if results.recur:
-    base = path(basedir)
-    for f in base.walkfiles('*.mp3'):
-        mufiles.append(str(f))
-else:
-    for f in glob.glob1(basedir, '*.mp3' ):
-        mufiles.append(os.path.join(basedir, f))
+mufiles = getFileList()
 
 if not mufiles and not results.genre_list:
     print warn("No .mp3 Files in Dir(s): .mp3 and .MP3 are different")
@@ -80,6 +84,7 @@ artist = ""
 album = ""
 genre = ""
 year = ""
+disc = []
 comment = ''
 tagModified = False
 
@@ -95,11 +100,19 @@ if results.genre:
 if results.year:
     year = results.year
     tagModified = True
+if results.disc:
+    d = results.disc.split('/')
+
+    if len(d) == 2:
+        disc = (d[0], d[1])
+        tagModified = True
+    else:
+        print "Bad Disc Num Format"
 
 if tagModified:
     print warn("Writing tags...")
     print "----------------------------------"
-    if not setTags(mufiles, artist, album, genre, year):
+    if not setTags(mufiles, artist, album, genre, year, disc):
         print "\tAll Tags Already Set to Specified Values"
 
 if results.convert:
@@ -119,6 +132,8 @@ elif results.genre_list == 'i':
 if results.rename == True:
     if setFileName(mufiles) == 0:
         print "\tNo files needed to be renamed!"
+    else:
+        mufiles = getFileList()
     sys.exit()
 
 if results.parse:
